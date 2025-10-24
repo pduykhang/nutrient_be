@@ -1,0 +1,28 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "release"
+  read_timeout: 30
+  write_timeout: 30
+  shutdown_timeout: 60
+
+database:
+  uri: "${MONGODB_URI}"
+  database: "nutrient_db"
+  max_pool_size: 100
+  min_pool_size: 10
+  connect_timeout: 30
+
+auth:
+  jwt_secret: "${JWT_SECRET}"
+  jwt_expiration: 3600
+  refresh_expiration: 604800
+
+nats:
+  url: "${NATS_URL}"
+  enabled: true
+
+logger:
+  level: "info"
+  development: false
+  encoding: "json"
