@@ -41,7 +41,7 @@ func (h *HealthHandler) Readiness(c *gin.Context) {
 	defer cancel()
 
 	if err := h.db.Ping(ctx, nil); err != nil {
-		h.logger.Error("Database health check failed", logger.Error(err))
+		h.logger.Error(ctx, "Database health check failed", logger.Error(err))
 		c.JSON(http.StatusServiceUnavailable, gin.H{
 			"status":    "DOWN",
 			"timestamp": time.Now().Unix(),

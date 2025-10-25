@@ -44,7 +44,7 @@ func NewMongoDB(cfg *config.DatabaseConfig, log logger.Logger) (*MongoDB, error)
 
 	database := client.Database(cfg.Database)
 
-	log.Info("Successfully connected to MongoDB",
+	log.InfoLegacy("Successfully connected to MongoDB",
 		logger.String("database", cfg.Database),
 		logger.String("uri", cfg.URI))
 
@@ -60,7 +60,7 @@ func (m *MongoDB) Close(ctx context.Context) error {
 	if err := m.Client.Disconnect(ctx); err != nil {
 		return fmt.Errorf("failed to disconnect from MongoDB: %w", err)
 	}
-	m.logger.Info("MongoDB connection closed")
+	m.logger.InfoLegacy("MongoDB connection closed")
 	return nil
 }
 

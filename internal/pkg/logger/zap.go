@@ -1,8 +1,23 @@
 package logger
 
 import (
+	"context"
+	"fmt"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+// ContextKey represents a key for context values
+type ContextKey string
+
+const (
+	RequestIDKey ContextKey = "request_id"
+	TraceIDKey   ContextKey = "trace_id"
+	UserIDKey    ContextKey = "user_id"
+	IPAddressKey ContextKey = "ip_address"
+	UserAgentKey ContextKey = "user_agent"
+	StartTimeKey ContextKey = "start_time"
 )
 
 // zapLogger implements the Logger interface using Zap
@@ -34,29 +49,146 @@ func NewZapLogger(isDevelopment bool) (Logger, error) {
 	return &zapLogger{logger: zapLog}, nil
 }
 
-// Debug logs a debug message
-func (l *zapLogger) Debug(msg string, fields ...Field) {
+// Context-aware logging methods
+
+// Debug logs a debug message with context
+func (l *zapLogger) Debug(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Debug(msg, allFields...)
+}
+
+// Debugf logs a formatted debug message with context
+func (l *zapLogger) Debugf(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Debug(msg, allFields...)
+}
+
+// Info logs an info message with context
+func (l *zapLogger) Info(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Info(msg, allFields...)
+}
+
+// Infof logs a formatted info message with context
+func (l *zapLogger) Infof(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Info(msg, allFields...)
+}
+
+// Warn logs a warning message with context
+func (l *zapLogger) Warn(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Warn(msg, allFields...)
+}
+
+// Warnf logs a formatted warning message with context
+func (l *zapLogger) Warnf(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Warn(msg, allFields...)
+}
+
+// Error logs an error message with context
+func (l *zapLogger) Error(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Error(msg, allFields...)
+}
+
+// Errorf logs a formatted error message with context
+func (l *zapLogger) Errorf(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Error(msg, allFields...)
+}
+
+// Fatal logs a fatal message with context and exits
+func (l *zapLogger) Fatal(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Fatal(msg, allFields...)
+}
+
+// Fatalf logs a formatted fatal message with context and exits
+func (l *zapLogger) Fatalf(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Fatal(msg, allFields...)
+}
+
+// Panic logs a panic message with context
+func (l *zapLogger) Panic(ctx context.Context, msg string, fields ...Field) {
+	allFields := l.buildContextFields(ctx, fields)
+	l.logger.Panic(msg, allFields...)
+}
+
+// Panicf logs a formatted panic message with context
+func (l *zapLogger) Panicf(ctx context.Context, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	allFields := l.buildContextFields(ctx, nil)
+	l.logger.Panic(msg, allFields...)
+}
+
+// Legacy methods without context (for backward compatibility)
+
+// DebugLegacy logs a debug message without context
+func (l *zapLogger) DebugLegacy(msg string, fields ...Field) {
 	l.logger.Debug(msg, l.toZapFields(fields)...)
 }
 
-// Info logs an info message
-func (l *zapLogger) Info(msg string, fields ...Field) {
+// DebugfLegacy logs a formatted debug message without context
+func (l *zapLogger) DebugfLegacy(format string, args ...interface{}) {
+	l.logger.Debug(fmt.Sprintf(format, args...))
+}
+
+// InfoLegacy logs an info message without context
+func (l *zapLogger) InfoLegacy(msg string, fields ...Field) {
 	l.logger.Info(msg, l.toZapFields(fields)...)
 }
 
-// Warn logs a warning message
-func (l *zapLogger) Warn(msg string, fields ...Field) {
+// InfofLegacy logs a formatted info message without context
+func (l *zapLogger) InfofLegacy(format string, args ...interface{}) {
+	l.logger.Info(fmt.Sprintf(format, args...))
+}
+
+// WarnLegacy logs a warning message without context
+func (l *zapLogger) WarnLegacy(msg string, fields ...Field) {
 	l.logger.Warn(msg, l.toZapFields(fields)...)
 }
 
-// Error logs an error message
-func (l *zapLogger) Error(msg string, fields ...Field) {
+// WarnfLegacy logs a formatted warning message without context
+func (l *zapLogger) WarnfLegacy(format string, args ...interface{}) {
+	l.logger.Warn(fmt.Sprintf(format, args...))
+}
+
+// ErrorLegacy logs an error message without context
+func (l *zapLogger) ErrorLegacy(msg string, fields ...Field) {
 	l.logger.Error(msg, l.toZapFields(fields)...)
 }
 
-// Fatal logs a fatal message and exits
-func (l *zapLogger) Fatal(msg string, fields ...Field) {
+// ErrorfLegacy logs a formatted error message without context
+func (l *zapLogger) ErrorfLegacy(format string, args ...interface{}) {
+	l.logger.Error(fmt.Sprintf(format, args...))
+}
+
+// FatalLegacy logs a fatal message without context and exits
+func (l *zapLogger) FatalLegacy(msg string, fields ...Field) {
 	l.logger.Fatal(msg, l.toZapFields(fields)...)
+}
+
+// FatalfLegacy logs a formatted fatal message without context and exits
+func (l *zapLogger) FatalfLegacy(format string, args ...interface{}) {
+	l.logger.Fatal(fmt.Sprintf(format, args...))
+}
+
+// PanicLegacy logs a panic message without context
+func (l *zapLogger) PanicLegacy(msg string, fields ...Field) {
+	l.logger.Panic(msg, l.toZapFields(fields)...)
+}
+
+// PanicfLegacy logs a formatted panic message without context
+func (l *zapLogger) PanicfLegacy(format string, args ...interface{}) {
+	l.logger.Panic(fmt.Sprintf(format, args...))
 }
 
 // With creates a new logger with additional fields
@@ -64,6 +196,48 @@ func (l *zapLogger) With(fields ...Field) Logger {
 	return &zapLogger{
 		logger: l.logger.With(l.toZapFields(fields)...),
 	}
+}
+
+// buildContextFields builds fields from context and additional fields
+func (l *zapLogger) buildContextFields(ctx context.Context, additionalFields []Field) []zap.Field {
+	fields := make([]zap.Field, 0, len(additionalFields)+10) // Pre-allocate with extra capacity
+
+	// Add context fields
+	if requestID := l.getContextValue(ctx, RequestIDKey); requestID != "" {
+		fields = append(fields, zap.String("request_id", requestID))
+	}
+	if traceID := l.getContextValue(ctx, TraceIDKey); traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if userID := l.getContextValue(ctx, UserIDKey); userID != "" {
+		fields = append(fields, zap.String("user_id", userID))
+	}
+	if ipAddress := l.getContextValue(ctx, IPAddressKey); ipAddress != "" {
+		fields = append(fields, zap.String("ip_address", ipAddress))
+	}
+	if userAgent := l.getContextValue(ctx, UserAgentKey); userAgent != "" {
+		fields = append(fields, zap.String("user_agent", userAgent))
+	}
+	if startTime := l.getContextValue(ctx, StartTimeKey); startTime != "" {
+		fields = append(fields, zap.String("start_time", startTime))
+	}
+
+	// Add additional fields
+	for _, field := range additionalFields {
+		fields = append(fields, zap.Any(field.Key, field.Value))
+	}
+
+	return fields
+}
+
+// getContextValue gets a value from context
+func (l *zapLogger) getContextValue(ctx context.Context, key ContextKey) string {
+	if value := ctx.Value(key); value != nil {
+		if str, ok := value.(string); ok {
+			return str
+		}
+	}
+	return ""
 }
 
 // toZapFields converts our Field structs to Zap fields

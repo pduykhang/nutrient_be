@@ -107,7 +107,7 @@ func startServer() {
 	}
 
 	// Log configuration info
-	log.Info("Starting server with configuration",
+	log.InfoLegacy("Starting server with configuration",
 		logger.String("config_path", configPath),
 		logger.String("environment", environment),
 		logger.String("host", cfg.Server.Host),
@@ -119,13 +119,13 @@ func startServer() {
 	// Initialize MongoDB
 	mongoDB, err := database.NewMongoDB(&cfg.Database, log)
 	if err != nil {
-		log.Fatal("Failed to connect to MongoDB", logger.Error(err))
+		log.FatalLegacy("Failed to connect to MongoDB", logger.Error(err))
 	}
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := mongoDB.Close(ctx); err != nil {
-			log.Error("Failed to close MongoDB connection", logger.Error(err))
+			log.ErrorLegacy("Failed to close MongoDB connection", logger.Error(err))
 		}
 	}()
 
@@ -176,12 +176,12 @@ func startServer() {
 
 	// Start server in goroutine
 	go func() {
-		log.Info("Server started successfully",
+		log.InfoLegacy("Server started successfully",
 			logger.String("address", server.Addr),
 			logger.String("mode", cfg.Server.Mode))
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Failed to start server", logger.Error(err))
+			log.FatalLegacy("Failed to start server", logger.Error(err))
 		}
 	}()
 
@@ -190,17 +190,17 @@ func startServer() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Info("Shutting down server...")
+	log.InfoLegacy("Shutting down server...")
 
 	// Shutdown server with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Error("Server forced to shutdown", logger.Error(err))
+		log.ErrorLegacy("Server forced to shutdown", logger.Error(err))
 	}
 
-	log.Info("Server exited")
+	log.InfoLegacy("Server exited")
 }
 
 // loadConfigWithFlags loads configuration with command line flags override

@@ -44,7 +44,9 @@ func AuthMiddleware(log logger.Logger) gin.HandlerFunc {
 		})
 
 		if err != nil {
-			log.Error("Failed to parse JWT token", logger.Error(err))
+			// Get context from Gin context
+			ctx := GetContext(c)
+			log.Error(ctx, "Failed to parse JWT token", logger.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return

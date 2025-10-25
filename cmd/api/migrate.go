@@ -88,7 +88,7 @@ func runMigrations() {
 	}
 
 	// Log migration info
-	log.Info("Starting database migrations",
+	log.InfoLegacy("Starting database migrations",
 		logger.String("config_path", migrateConfigPath),
 		logger.String("environment", migrateEnvironment),
 		logger.String("db_name", cfg.Database.Database),
@@ -109,22 +109,22 @@ func runMigrations() {
 	// Initialize MongoDB
 	mongoDB, err := database.NewMongoDB(&cfg.Database, log)
 	if err != nil {
-		log.Fatal("Failed to connect to MongoDB", logger.Error(err))
+		log.FatalLegacy("Failed to connect to MongoDB", logger.Error(err))
 	}
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := mongoDB.Close(ctx); err != nil {
-			log.Error("Failed to close MongoDB connection", logger.Error(err))
+			log.ErrorLegacy("Failed to close MongoDB connection", logger.Error(err))
 		}
 	}()
 
 	// Run migrations
 	if err := runDatabaseMigrations(mongoDB, log); err != nil {
-		log.Fatal("Failed to run migrations", logger.Error(err))
+		log.FatalLegacy("Failed to run migrations", logger.Error(err))
 	}
 
-	log.Info("Migrations completed successfully")
+	log.InfoLegacy("Migrations completed successfully")
 }
 
 func loadMigrateConfig() (*config.Config, error) {
@@ -179,7 +179,7 @@ func runDatabaseMigrations(mongoDB *database.MongoDB, log logger.Logger) error {
 		collection := mongoDB.GetCollection(collectionName)
 
 		if migrateDryRun {
-			log.Info("DRY RUN: Would create indexes for collection", logger.String("collection", collectionName))
+			log.InfoLegacy("DRY RUN: Would create indexes for collection", logger.String("collection", collectionName))
 			continue
 		}
 
@@ -234,7 +234,7 @@ func runDatabaseMigrations(mongoDB *database.MongoDB, log logger.Logger) error {
 			}
 		}
 
-		log.Info("Created indexes for collection", logger.String("collection", collectionName))
+		log.InfoLegacy("Created indexes for collection", logger.String("collection", collectionName))
 	}
 
 	return nil

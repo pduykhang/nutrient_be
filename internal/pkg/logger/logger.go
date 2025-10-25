@@ -1,13 +1,41 @@
 package logger
 
+import (
+	"context"
+)
+
 // Logger interface defines the contract for logging operations
 // This abstraction allows easy switching between different logging libraries
 type Logger interface {
-	Debug(msg string, fields ...Field)
-	Info(msg string, fields ...Field)
-	Warn(msg string, fields ...Field)
-	Error(msg string, fields ...Field)
-	Fatal(msg string, fields ...Field)
+	// Context-aware logging methods
+	Debug(ctx context.Context, msg string, fields ...Field)
+	Debugf(ctx context.Context, format string, args ...interface{})
+	Info(ctx context.Context, msg string, fields ...Field)
+	Infof(ctx context.Context, format string, args ...interface{})
+	Warn(ctx context.Context, msg string, fields ...Field)
+	Warnf(ctx context.Context, format string, args ...interface{})
+	Error(ctx context.Context, msg string, fields ...Field)
+	Errorf(ctx context.Context, format string, args ...interface{})
+	Fatal(ctx context.Context, msg string, fields ...Field)
+	Fatalf(ctx context.Context, format string, args ...interface{})
+	Panic(ctx context.Context, msg string, fields ...Field)
+	Panicf(ctx context.Context, format string, args ...interface{})
+
+	// Legacy methods without context (for backward compatibility)
+	DebugLegacy(msg string, fields ...Field)
+	DebugfLegacy(format string, args ...interface{})
+	InfoLegacy(msg string, fields ...Field)
+	InfofLegacy(format string, args ...interface{})
+	WarnLegacy(msg string, fields ...Field)
+	WarnfLegacy(format string, args ...interface{})
+	ErrorLegacy(msg string, fields ...Field)
+	ErrorfLegacy(format string, args ...interface{})
+	FatalLegacy(msg string, fields ...Field)
+	FatalfLegacy(format string, args ...interface{})
+	PanicLegacy(msg string, fields ...Field)
+	PanicfLegacy(format string, args ...interface{})
+
+	// With method for adding persistent fields
 	With(fields ...Field) Logger
 }
 

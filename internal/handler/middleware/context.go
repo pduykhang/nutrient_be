@@ -12,8 +12,6 @@ import (
 
 // ContextMiddleware creates middleware that injects context information
 func ContextMiddleware(log logger.Logger) gin.HandlerFunc {
-	contextHelper := logger.NewContextHelper()
-
 	return func(c *gin.Context) {
 		// Generate request ID if not present
 		requestID := c.GetHeader("X-Request-ID")
@@ -37,12 +35,12 @@ func ContextMiddleware(log logger.Logger) gin.HandlerFunc {
 
 		// Create context with all the information
 		ctx := context.Background()
-		ctx = contextHelper.WithRequestID(ctx, requestID)
-		ctx = contextHelper.WithTraceID(ctx, traceID)
-		ctx = contextHelper.WithUserID(ctx, userID)
-		ctx = contextHelper.WithIPAddress(ctx, c.ClientIP())
-		ctx = contextHelper.WithUserAgent(ctx, c.GetHeader("User-Agent"))
-		ctx = contextHelper.WithStartTime(ctx, time.Now())
+		ctx = context.WithValue(ctx, logger.RequestIDKey, requestID)
+		ctx = context.WithValue(ctx, logger.TraceIDKey, traceID)
+		ctx = context.WithValue(ctx, logger.UserIDKey, userID)
+		ctx = context.WithValue(ctx, logger.IPAddressKey, c.ClientIP())
+		ctx = context.WithValue(ctx, logger.UserAgentKey, c.GetHeader("User-Agent"))
+		ctx = context.WithValue(ctx, logger.StartTimeKey, time.Now().Format(time.RFC3339))
 
 		// Store context in Gin context
 		c.Set("context", ctx)
@@ -51,23 +49,9 @@ func ContextMiddleware(log logger.Logger) gin.HandlerFunc {
 		c.Header("X-Request-ID", requestID)
 		c.Header("X-Trace-ID", traceID)
 
-		// Create context logger
-		contextLogger := logger.NewContextLogger(log, ctx)
-		c.Set("logger", contextLogger)
-
 		// Continue to next handler
 		c.Next()
 	}
-}
-
-// GetContextLogger extracts context logger from Gin context
-func GetContextLogger(c *gin.Context) *logger.ContextLogger {
-	if loggerValue, exists := c.Get("logger"); exists {
-		if contextLogger, ok := loggerValue.(*logger.ContextLogger); ok {
-			return contextLogger
-		}
-	}
-	return nil
 }
 
 // GetContext extracts context from Gin context

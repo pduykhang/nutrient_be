@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,13 @@ const (
 // LoggingMiddleware logs HTTP requests
 func LoggingMiddleware(log logger.Logger) gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		log.Info("HTTP Request",
+		// Create a basic context for logging
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, logger.RequestIDKey, param.Request.Header.Get(RequestIDHeader))
+		ctx = context.WithValue(ctx, logger.IPAddressKey, param.ClientIP)
+		ctx = context.WithValue(ctx, logger.UserAgentKey, param.Request.UserAgent())
+
+		log.Info(ctx, "HTTP Request",
 			logger.String("method", param.Method),
 			logger.String("path", param.Path),
 			logger.Int("status", param.StatusCode),
@@ -31,7 +38,10 @@ func LoggingMiddleware(log logger.Logger) gin.HandlerFunc {
 // RecoveryMiddleware recovers from panics
 func RecoveryMiddleware(log logger.Logger) gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		log.Error("Panic recovered",
+		// Get context from Gin context
+		ctx := GetContext(c)
+
+		log.Error(ctx, "Panic recovered",
 			logger.Any("error", recovered),
 			logger.String("path", c.Request.URL.Path),
 			logger.String("method", c.Request.Method),

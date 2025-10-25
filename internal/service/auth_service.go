@@ -102,7 +102,7 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Auth
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
 
-	s.logger.Info("User registered successfully",
+	s.logger.Info(ctx, "User registered successfully",
 		logger.String("email", req.Email),
 		logger.String("userID", user.ID.Hex()))
 
@@ -133,7 +133,7 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthRespon
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
 
-	s.logger.Info("User logged in successfully",
+	s.logger.Info(ctx, "User logged in successfully",
 		logger.String("email", req.Email),
 		logger.String("userID", user.ID.Hex()))
 
