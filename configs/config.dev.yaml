@@ -1,5 +1,9 @@
+# Development Configuration for Docker Compose
+# Environment variables can override these values
+# Format: SERVER__PORT, DATABASE__URI, AUTH__JWT_SECRET, etc.
+
 server:
-  host: "0.0.0.0"
+  host: "0.0.0.0"  # Listen on all interfaces for Docker
   port: 8080
   mode: "debug"
   read_timeout: 10
@@ -7,6 +11,7 @@ server:
   shutdown_timeout: 30
 
 database:
+  # MongoDB connection - uses service name 'mongo' in Docker network
   uri: "mongodb://mongo:27017"
   database: "nutrient_db"
   max_pool_size: 100
@@ -14,15 +19,17 @@ database:
   connect_timeout: 10
 
 auth:
+  # JWT secret - can be overridden by JWT_SECRET env var
   jwt_secret: "dev-secret-key"
-  jwt_expiration: 3600
-  refresh_expiration: 604800
+  jwt_expiration: 3600  # 1 hour
+  refresh_expiration: 604800  # 7 days
 
 nats:
+  # NATS connection - uses service name 'nats' in Docker network
   url: "nats://nats:4222"
   enabled: true
 
 logger:
   level: "debug"
   development: true
-  encoding: "console"
+  encoding: "console"  # console for development, json for production

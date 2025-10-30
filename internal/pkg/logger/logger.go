@@ -21,20 +21,6 @@ type Logger interface {
 	Panic(ctx context.Context, msg string, fields ...Field)
 	Panicf(ctx context.Context, format string, args ...interface{})
 
-	// Legacy methods without context (for backward compatibility)
-	DebugLegacy(msg string, fields ...Field)
-	DebugfLegacy(format string, args ...interface{})
-	InfoLegacy(msg string, fields ...Field)
-	InfofLegacy(format string, args ...interface{})
-	WarnLegacy(msg string, fields ...Field)
-	WarnfLegacy(format string, args ...interface{})
-	ErrorLegacy(msg string, fields ...Field)
-	ErrorfLegacy(format string, args ...interface{})
-	FatalLegacy(msg string, fields ...Field)
-	FatalfLegacy(format string, args ...interface{})
-	PanicLegacy(msg string, fields ...Field)
-	PanicfLegacy(format string, args ...interface{})
-
 	// With method for adding persistent fields
 	With(fields ...Field) Logger
 }

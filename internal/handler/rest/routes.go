@@ -18,7 +18,7 @@ func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 	r.Use(middleware.ResponseMiddleware(handlers.Auth.logger)) // Add response middleware
 
 	// Health checks (no auth required)
-	r.GET("/health/liveness", handlers.Health.Liveness)
+	r.HEAD("/health/liveness", handlers.Health.Liveness)
 	r.GET("/health/readiness", handlers.Health.Readiness)
 
 	// API v1 routes

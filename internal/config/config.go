@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -63,6 +64,11 @@ func Load(configPath string) (*Config, error) {
 	// Enable reading from environment variables
 	viper.AutomaticEnv()
 
+	// Map environment variables to config keys
+	// Example: DATABASE_URI -> database.uri, SERVER_PORT -> server.port
+	// Double underscore (__) is used for nested keys in env vars
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	// Set default values
 	setDefaults()
 
@@ -117,14 +123,44 @@ func setDefaults() {
 
 // validate validates the configuration
 func validate(config *Config) error {
+	if err := validateServer(config); err != nil {
+		return err
+	}
+
+	if err := validateDatabase(config); err != nil {
+		return err
+	}
+
+	if err := validateAuth(config); err != nil {
+		return err
+	}
+
+	if err := validateLogger(config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateServer validates server configuration
+func validateServer(config *Config) error {
 	if config.Server.Port <= 0 || config.Server.Port > 65535 {
 		return fmt.Errorf("invalid server port: %d", config.Server.Port)
 	}
 
-	if config.Server.Mode != "debug" && config.Server.Mode != "release" {
+	validModes := map[string]bool{
+		"debug":   true,
+		"release": true,
+	}
+	if !validModes[config.Server.Mode] {
 		return fmt.Errorf("invalid server mode: %s", config.Server.Mode)
 	}
 
+	return nil
+}
+
+// validateDatabase validates database configuration
+func validateDatabase(config *Config) error {
 	if config.Database.URI == "" {
 		return fmt.Errorf("database URI is required")
 	}
@@ -133,16 +169,35 @@ func validate(config *Config) error {
 		return fmt.Errorf("database name is required")
 	}
 
+	return nil
+}
+
+// validateAuth validates authentication configuration
+func validateAuth(config *Config) error {
 	if config.Auth.JWTSecret == "" {
 		return fmt.Errorf("JWT secret is required")
 	}
 
-	if config.Logger.Level != "debug" && config.Logger.Level != "info" &&
-		config.Logger.Level != "warn" && config.Logger.Level != "error" {
+	return nil
+}
+
+// validateLogger validates logger configuration
+func validateLogger(config *Config) error {
+	validLevels := map[string]bool{
+		"debug": true,
+		"info":  true,
+		"warn":  true,
+		"error": true,
+	}
+	if !validLevels[config.Logger.Level] {
 		return fmt.Errorf("invalid logger level: %s", config.Logger.Level)
 	}
 
-	if config.Logger.Encoding != "json" && config.Logger.Encoding != "console" {
+	validEncodings := map[string]bool{
+		"json":    true,
+		"console": true,
+	}
+	if !validEncodings[config.Logger.Encoding] {
 		return fmt.Errorf("invalid logger encoding: %s", config.Logger.Encoding)
 	}
 

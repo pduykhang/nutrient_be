@@ -1,18 +1,31 @@
-version: '3.8'
-
 services:
   api:
     build:
       context: ..
       dockerfile: deployments/docker/Dockerfile.dev
+    container_name: nutrient-api-dev
+    working_dir: /app
     ports:
       - "8080:8080"
+      - "8082:8082"
     environment:
+      # Config file path (used by Air and application)
       - CONFIG_PATH=/app/configs/config.dev.yaml
-      - MONGODB_URI=mongodb://mongo:27017
-      - JWT_SECRET=dev-secret-key
+      # Override database URI if needed (Viper maps DATABASE_URI -> database.uri)
+      - DATABASE_URI=mongodb://mongo:27017
+      # Override JWT secret if needed (Viper maps AUTH_JWT_SECRET -> auth.jwt_secret)
+      - AUTH_JWT_SECRET=dev-secret-key
+      # Air working directory
+      - AIR_WD=/app
+      # NATS configuration (Viper maps NATS_URL -> nats.url, NATS_ENABLED -> nats.enabled)
+      - NATS_URL=nats://nats:4222
+      - NATS_ENABLED=true
     volumes:
+      # Mount entire project for hot reload
       - ..:/app
+      # Exclude tmp and bin directories from host mounts (let container handle them)
+      - /app/tmp
+      - /app/bin
     depends_on:
       mongo:
         condition: service_healthy
@@ -21,10 +34,11 @@ services:
     networks:
       - nutrient-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health/liveness"]
+      test: ["CMD", "wget", "--method", "GET", "--spider", "-q", "http://api:8080/health/liveness"]
       interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 10s
 
   mongo:
     image: mongo:7.0

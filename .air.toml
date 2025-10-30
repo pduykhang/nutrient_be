@@ -1,0 +1,80 @@
+# Air configuration for hot reload
+# Documentation: https://github.com/air-verse/air
+
+root = "."
+testdata_dir = "testdata"
+tmp_dir = "tmp"
+
+[build]
+  # Commands to run before each build
+  pre_cmd = []
+  # Build command
+  cmd = "go build -o ./tmp/nutrient-api ./cmd/api"
+  # Binary file location (relative to project root)
+  bin = "./tmp/nutrient-api"
+  # Custom binary arguments
+  args_bin = ["server", "--config=configs/config.dev.yaml"]
+  # Execute command when binary file changes
+  full_bin = ""
+  # Delay after receiving interrupt signal before sending kill signal
+  delay = 1000
+  # Exclude file extensions
+  exclude_ext = ["", ".tmpl", ".tpl", ".html"]
+  # Include file extensions (empty means include all)
+  include_ext = [".go", ".tpl", ".tmpl", ".html"]
+  # Include directories (empty means include all)
+  include_dir = []
+  # Exclude directories
+  exclude_dir = [
+    "assets",
+    "tmp",
+    "vendor",
+    "testdata",
+    "bin",
+    ".git",
+    "node_modules",
+    ".vscode",
+    ".idea",
+    "docs",
+    "deployments",
+    "examples",
+    "proto",
+    "scripts"
+  ]
+  # Exclude regular expressions
+  exclude_regex = ["_test.go"]
+  # Exclude file names without extensions
+  exclude_unchanged = false
+  # Follow symbolic links
+  follow_symlink = false
+  # Log file to use for Air
+  log = "tmp/air.log"
+  # Polling mode (for systems that don't support file events)
+  poll = true
+  # Poll interval in milliseconds
+  poll_interval = 500
+  # Set to true to include files that exist in the gitignore
+  ignore = false
+
+[color]
+  app = ""
+  build = "yellow"
+  main = "magenta"
+  runner = "green"
+  watcher = "cyan"
+
+[log]
+  # Show timestamp in logs
+  time = true
+  main_only = false
+
+[misc]
+  # Delete temporary files on exit
+  clean_on_exit = true
+
+[proxy]
+  # Enable proxy for browser auto-reload
+  enabled = true
+  proxy_port = 8082
+  app_port = 8080
+
