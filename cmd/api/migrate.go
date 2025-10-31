@@ -70,6 +70,7 @@ func init() {
 	viper.BindPFlag("migrate.db_name", migrateCmd.Flags().Lookup("db-name"))
 	viper.BindPFlag("migrate.dry_run", migrateCmd.Flags().Lookup("dry-run"))
 	viper.BindPFlag("migrate.force", migrateCmd.Flags().Lookup("force"))
+	viper.BindPFlag("migrate.force", migrateCmd.Flags().Lookup("force"))
 }
 
 func runMigrations() {

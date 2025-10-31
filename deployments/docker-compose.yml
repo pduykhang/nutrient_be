@@ -34,7 +34,16 @@ services:
     networks:
       - nutrient-network
     healthcheck:
-      test: ["CMD", "wget", "--method", "GET", "--spider", "-q", "http://api:8080/health/liveness"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--method",
+          "GET",
+          "--spider",
+          "-q",
+          "http://api:8080/health/liveness",
+        ]
       interval: 10s
       timeout: 3s
       retries: 3
