@@ -11,16 +11,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"nutrient_be/internal/domain"
-	"nutrient_be/internal/repository"
 )
 
-// shoppingListRepository implements repository.ShoppingListRepository
+// shoppingListRepository handles shopping list data operations
 type shoppingListRepository struct {
 	collection *mongo.Collection
 }
 
 // NewShoppingListRepository creates a new shopping list repository
-func NewShoppingListRepository(db *mongo.Database) repository.ShoppingListRepository {
+func NewShoppingListRepository(db *mongo.Database) *shoppingListRepository {
 	return &shoppingListRepository{
 		collection: db.Collection("shopping_lists"),
 	}

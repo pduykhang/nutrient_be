@@ -10,16 +10,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"nutrient_be/internal/domain"
-	"nutrient_be/internal/repository"
 )
 
-// userRepository implements repository.UserRepository
+// userRepository handles user data operations
 type userRepository struct {
 	collection *mongo.Collection
 }
 
 // NewUserRepository creates a new user repository
-func NewUserRepository(db *mongo.Database) repository.UserRepository {
+func NewUserRepository(db *mongo.Database) *userRepository {
 	return &userRepository{
 		collection: db.Collection("users"),
 	}

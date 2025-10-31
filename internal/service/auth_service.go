@@ -12,18 +12,26 @@ import (
 	"nutrient_be/internal/config"
 	"nutrient_be/internal/domain"
 	"nutrient_be/internal/pkg/logger"
-	"nutrient_be/internal/repository"
 )
+
+// UserRepository defines the interface for user data operations used by AuthService
+type UserRepository interface {
+	Create(ctx context.Context, user *domain.User) error
+	GetByID(ctx context.Context, id primitive.ObjectID) (*domain.User, error)
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	Update(ctx context.Context, user *domain.User) error
+	Delete(ctx context.Context, id primitive.ObjectID) error
+}
 
 // AuthService handles authentication operations
 type AuthService struct {
-	userRepo repository.UserRepository
+	userRepo UserRepository
 	config   config.AuthConfig
 	logger   logger.Logger
 }
 
 // NewAuthService creates a new auth service
-func NewAuthService(userRepo repository.UserRepository, cfg config.AuthConfig, log logger.Logger) *AuthService {
+func NewAuthService(userRepo UserRepository, cfg config.AuthConfig, log logger.Logger) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
 		config:   cfg,

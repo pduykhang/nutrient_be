@@ -12,16 +12,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"nutrient_be/internal/domain"
-	"nutrient_be/internal/repository"
 )
 
-// foodRepository implements repository.FoodRepository
+// foodRepository handles food data operations
 type foodRepository struct {
 	collection *mongo.Collection
 }
 
 // NewFoodRepository creates a new food repository
-func NewFoodRepository(db *mongo.Database) repository.FoodRepository {
+func NewFoodRepository(db *mongo.Database) *foodRepository {
 	return &foodRepository{
 		collection: db.Collection("foods"),
 	}

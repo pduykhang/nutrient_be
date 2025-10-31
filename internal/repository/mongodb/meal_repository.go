@@ -11,16 +11,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"nutrient_be/internal/domain"
-	"nutrient_be/internal/repository"
 )
 
-// mealTemplateRepository implements repository.MealTemplateRepository
+// mealTemplateRepository handles meal template data operations
 type mealTemplateRepository struct {
 	collection *mongo.Collection
 }
 
 // NewMealTemplateRepository creates a new meal template repository
-func NewMealTemplateRepository(db *mongo.Database) repository.MealTemplateRepository {
+func NewMealTemplateRepository(db *mongo.Database) *mealTemplateRepository {
 	return &mealTemplateRepository{
 		collection: db.Collection("meal_templates"),
 	}
