@@ -10,6 +10,10 @@ import (
 	"nutrient_be/internal/pkg/logger"
 )
 
+const (
+	DefaultUserID = "abc-xyz-123"
+)
+
 // AuthMiddleware validates JWT tokens
 func AuthMiddleware(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -102,4 +106,12 @@ func GetUserIDFromContext(c *gin.Context) (string, bool) {
 	}
 
 	return userIDStr, true
+}
+
+func DefaultUserAuthMiddleware(log logger.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Warn(c.Request.Context(), "Default user authentication middleware", logger.String("user_id", DefaultUserID))
+		c.Set("userID", DefaultUserID)
+		c.Next()
+	}
 }

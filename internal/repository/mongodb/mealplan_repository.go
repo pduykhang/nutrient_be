@@ -13,6 +13,10 @@ import (
 	"nutrient_be/internal/domain"
 )
 
+const (
+	mealPlanCollection = "meal_plans"
+)
+
 // mealPlanRepository handles meal plan data operations
 type mealPlanRepository struct {
 	collection *mongo.Collection
@@ -21,7 +25,7 @@ type mealPlanRepository struct {
 // NewMealPlanRepository creates a new meal plan repository
 func NewMealPlanRepository(db *mongo.Database) *mealPlanRepository {
 	return &mealPlanRepository{
-		collection: db.Collection("meal_plans"),
+		collection: db.Collection(mealPlanCollection),
 	}
 }
 

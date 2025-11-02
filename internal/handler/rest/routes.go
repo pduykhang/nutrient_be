@@ -34,7 +34,7 @@ func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 
 		// Protected routes (auth required)
 		protected := v1.Group("")
-		protected.Use(middleware.AuthMiddleware(handlers.Auth.logger))
+		protected.Use(middleware.DefaultUserAuthMiddleware(handlers.Auth.logger))
 		{
 			// Foods
 			foods := protected.Group("/foods")

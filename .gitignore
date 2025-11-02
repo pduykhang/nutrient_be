@@ -51,3 +51,4 @@ coverage.out
 # Temporary files
 tmp/
 temp/
+.cursor/

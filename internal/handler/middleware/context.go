@@ -63,3 +63,28 @@ func GetContext(c *gin.Context) context.Context {
 	}
 	return context.Background()
 }
+
+type ContextData struct {
+	RequestID string
+	TraceID   string
+	UserID    string
+	IPAddress string
+	UserAgent string
+	StartTime time.Time
+}
+
+func GetContextData(c *gin.Context) *ContextData {
+	if ctxValue, exists := c.Get("context"); exists {
+		if ctx, ok := ctxValue.(context.Context); ok {
+			return &ContextData{
+				RequestID: ctx.Value(logger.RequestIDKey).(string),
+				TraceID:   ctx.Value(logger.TraceIDKey).(string),
+				UserID:    ctx.Value(logger.UserIDKey).(string),
+				IPAddress: ctx.Value(logger.IPAddressKey).(string),
+				UserAgent: ctx.Value(logger.UserAgentKey).(string),
+				StartTime: ctx.Value(logger.StartTimeKey).(time.Time),
+			}
+		}
+	}
+	return nil
+}

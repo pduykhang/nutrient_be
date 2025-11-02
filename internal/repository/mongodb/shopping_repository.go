@@ -13,6 +13,10 @@ import (
 	"nutrient_be/internal/domain"
 )
 
+const (
+	shoppingListCollection = "shopping_lists"
+)
+
 // shoppingListRepository handles shopping list data operations
 type shoppingListRepository struct {
 	collection *mongo.Collection
@@ -21,7 +25,7 @@ type shoppingListRepository struct {
 // NewShoppingListRepository creates a new shopping list repository
 func NewShoppingListRepository(db *mongo.Database) *shoppingListRepository {
 	return &shoppingListRepository{
-		collection: db.Collection("shopping_lists"),
+		collection: db.Collection(shoppingListCollection),
 	}
 }
 

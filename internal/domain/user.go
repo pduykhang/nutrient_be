@@ -1,9 +1,12 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"nutrient_be/internal/dto/request"
 )
 
 // User represents a user in the system
@@ -78,4 +81,51 @@ type FoodItem struct {
 	ImageURL     string             `bson:"imageUrl,omitempty" json:"imageUrl,omitempty"`
 	CreatedAt    time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt    time.Time          `bson:"updatedAt" json:"updatedAt"`
+}
+
+func FoodItemFromRequest(ctx context.Context, req *request.CreateFoodRequest, userID string) *FoodItem {
+	userIDObj := primitive.ObjectID{}
+	if userID != "" {
+		userIDObj, _ = primitive.ObjectIDFromHex(userID)
+	}
+
+	servingSizes := make([]ServingSize, len(req.ServingSizes))
+	for i, servingSize := range req.ServingSizes {
+		servingSizes[i] = ServingSize{
+			Unit:           servingSize.Unit,
+			Amount:         servingSize.Amount,
+			Description:    servingSize.Description,
+			GramEquivalent: servingSize.GramEquivalent,
+		}
+	}
+
+	return &FoodItem{
+		Name:        req.Name,
+		SearchTerms: req.SearchTerms,
+		Description: req.Description,
+		Category:    req.Category,
+		Macros: MacroNutrients{
+			Protein:       req.Macros.Protein,
+			Carbohydrates: req.Macros.Carbohydrates,
+			Fat:           req.Macros.Fat,
+			Fiber:         req.Macros.Fiber,
+			Sugar:         req.Macros.Sugar,
+		},
+		Micros: MicroNutrients{
+			VitaminA:  req.Micros.VitaminA,
+			VitaminC:  req.Micros.VitaminC,
+			Calcium:   req.Micros.Calcium,
+			Iron:      req.Micros.Iron,
+			Sodium:    req.Micros.Sodium,
+			Potassium: req.Micros.Potassium,
+		},
+		ServingSizes: servingSizes,
+		Calories:     req.Calories,
+		CreatedBy:    userIDObj,
+		Visibility:   req.Visibility,
+		Source:       "user",
+		ImageURL:     req.ImageURL,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
 }
