@@ -34,12 +34,21 @@ func NewZapLogger(isDevelopment bool) (Logger, error) {
 		config := zap.NewDevelopmentConfig()
 		config.EncoderConfig.TimeKey = "timestamp"
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		zapLog, err = config.Build()
+		config.EncoderConfig.CallerKey = "caller"
+		config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		// Only show stack trace for Panic and Fatal levels, not for Error
+		// This prevents verbose stack traces in normal error logging
+		// Note: AddStacktrace with PanicLevel means stack trace only appears for Panic/Fatal
+		zapLog, err = config.Build(
+			zap.AddStacktrace(zapcore.PanicLevel), // Only add stack trace for Panic and above
+			zap.AddCaller(),                       // Include caller information (file:line)
+		)
 	} else {
 		config := zap.NewProductionConfig()
 		config.EncoderConfig.TimeKey = "timestamp"
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		zapLog, err = config.Build()
+		// Only show stack trace for Panic and Fatal in production
+		zapLog, err = config.Build(zap.AddStacktrace(zapcore.PanicLevel))
 	}
 
 	if err != nil {
@@ -224,6 +233,14 @@ func (l *zapLogger) buildContextFields(ctx context.Context, additionalFields []F
 
 	// Add additional fields
 	for _, field := range additionalFields {
+		// Special handling for error fields to avoid stack traces
+		if field.Key == "error" {
+			if err, ok := field.Value.(error); ok {
+				// Only log error message, not full stack trace
+				fields = append(fields, zap.String("error", err.Error()))
+				continue
+			}
+		}
 		fields = append(fields, zap.Any(field.Key, field.Value))
 	}
 

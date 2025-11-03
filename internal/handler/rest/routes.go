@@ -30,12 +30,28 @@ func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 			auth.POST("/register", handlers.Auth.Register)
 			auth.POST("/login", handlers.Auth.Login)
 			auth.POST("/refresh", handlers.Auth.Refresh)
+			auth.POST("/validate", handlers.Auth.Validate)
 		}
 
 		// Protected routes (auth required)
 		protected := v1.Group("")
 		protected.Use(middleware.DefaultUserAuthMiddleware(handlers.Auth.logger))
 		{
+			// User management
+			users := protected.Group("/users")
+			{
+				users.GET("/profile", handlers.User.GetProfile)
+				users.PUT("/profile", handlers.User.UpdateProfile)
+				users.PUT("/preferences", handlers.User.UpdatePreferences)
+				users.PUT("/password", handlers.User.ChangePassword)
+			}
+
+			// Auth (protected)
+			authProtected := protected.Group("/auth")
+			{
+				authProtected.POST("/logout", handlers.Auth.Logout)
+			}
+
 			// Foods
 			foods := protected.Group("/foods")
 			{

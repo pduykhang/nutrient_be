@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"nutrient_be/internal/domain"
 	"nutrient_be/internal/dto/request"
-	"nutrient_be/internal/handler/middleware"
 	"nutrient_be/internal/pkg/logger"
 	"nutrient_be/internal/pkg/validator"
 )
@@ -67,16 +65,26 @@ func (s *FoodService) CreateFood(ctx context.Context, userID string, req *reques
 
 func (s *FoodService) SearchFood(ctx context.Context, req *request.SearchFoodRequest) ([]*domain.FoodItem, error) {
 	s.logger.Info(ctx, "Searching food", logger.String("query", req.Query))
-	userIDStr, exists := middleware.GetUserIDFromContext(ctx.(*gin.Context))
-	if !exists {
+
+	// Get user ID from context (set by context middleware)
+	userIDValue := ctx.Value(logger.UserIDKey)
+	if userIDValue == nil {
 		s.logger.Error(ctx, "User ID not found in context")
 		return nil, fmt.Errorf("user ID not found in context")
 	}
+
+	userIDStr, ok := userIDValue.(string)
+	if !ok || userIDStr == "" {
+		s.logger.Error(ctx, "Invalid user ID in context")
+		return nil, fmt.Errorf("invalid user ID in context")
+	}
+
 	userID, err := primitive.ObjectIDFromHex(userIDStr)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to convert user ID to object ID", logger.Error(err))
 		return nil, fmt.Errorf("failed to convert user ID to object ID: %w", err)
 	}
+
 	foods, err := s.foodRepo.Search(ctx, req.Query, userID, req.Limit, req.Offset)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to search food", logger.Error(err))

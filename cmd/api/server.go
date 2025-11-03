@@ -138,6 +138,7 @@ func startServer() {
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, cfg.Auth, log)
+	userService := service.NewUserService(userRepo, log)
 	foodService := service.NewFoodService(foodRepo, log)
 	mealService := service.NewMealService(mealTemplateRepo, foodRepo, log)
 	mealPlanService := service.NewMealPlanService(mealPlanRepo, mealTemplateRepo, log)
@@ -147,6 +148,7 @@ func startServer() {
 	// Initialize handlers
 	handlers := rest.NewHandlers(
 		authService,
+		userService,
 		foodService,
 		mealService,
 		mealPlanService,

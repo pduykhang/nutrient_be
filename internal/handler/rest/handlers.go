@@ -10,6 +10,7 @@ import (
 // Handlers contains all HTTP handlers
 type Handlers struct {
 	Auth     *AuthHandler
+	User     *UserHandler
 	Health   *HealthHandler
 	Food     *FoodHandler
 	Meal     *MealHandler
@@ -21,6 +22,7 @@ type Handlers struct {
 // NewHandlers creates a new handlers instance
 func NewHandlers(
 	authService *service.AuthService,
+	userService *service.UserService,
 	foodService *service.FoodService,
 	mealService *service.MealService,
 	mealPlanService *service.MealPlanService,
@@ -31,6 +33,7 @@ func NewHandlers(
 ) *Handlers {
 	return &Handlers{
 		Auth:     NewAuthHandler(authService, log),
+		User:     NewUserHandler(userService, log),
 		Health:   NewHealthHandler(db, log),
 		Food:     NewFoodHandler(foodService, log),
 		Meal:     NewMealHandler(mealService, log),

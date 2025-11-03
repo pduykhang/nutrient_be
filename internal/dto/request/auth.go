@@ -1,15 +1,10 @@
 package request
 
-// RegisterRequest represents a user registration request
+// RegisterRequest represents a basic user registration request (email and password only)
+// Profile information should be set separately via user endpoints
 type RegisterRequest struct {
-	Email    string  `json:"email" validate:"required,email"`
-	Password string  `json:"password" validate:"required,min=6"`
-	Name     string  `json:"name" validate:"required"`
-	Age      int     `json:"age" validate:"required,min=1,max=120"`
-	Weight   float64 `json:"weight" validate:"required,min=1"`
-	Height   float64 `json:"height" validate:"required,min=1"`
-	Gender   string  `json:"gender" validate:"required,oneof=male female other"`
-	Goal     string  `json:"goal" validate:"required,oneof=weight_loss muscle_gain maintenance"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
 }
 
 // LoginRequest represents a user login request
@@ -22,4 +17,3 @@ type LoginRequest struct {
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
-

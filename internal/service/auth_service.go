@@ -11,6 +11,8 @@ import (
 
 	"nutrient_be/internal/config"
 	"nutrient_be/internal/domain"
+	"nutrient_be/internal/dto/request"
+	"nutrient_be/internal/dto/response"
 	"nutrient_be/internal/pkg/logger"
 )
 
@@ -39,34 +41,19 @@ func NewAuthService(userRepo UserRepository, cfg config.AuthConfig, log logger.L
 	}
 }
 
-// RegisterRequest represents a user registration request
-type RegisterRequest struct {
-	Email    string  `json:"email" validate:"required,email"`
-	Password string  `json:"password" validate:"required,min=6"`
-	Name     string  `json:"name" validate:"required"`
-	Age      int     `json:"age" validate:"required,min=1,max=120"`
-	Weight   float64 `json:"weight" validate:"required,min=1"`
-	Height   float64 `json:"height" validate:"required,min=1"`
-	Gender   string  `json:"gender" validate:"required,oneof=male female other"`
-	Goal     string  `json:"goal" validate:"required,oneof=weight_loss muscle_gain maintenance"`
-}
-
-// LoginRequest represents a user login request
-type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
+// LoginRequest is now in internal/dto/request/auth.go
 
 // AuthResponse represents an authentication response
 type AuthResponse struct {
-	User         *domain.User `json:"user"`
-	AccessToken  string       `json:"accessToken"`
-	RefreshToken string       `json:"refreshToken"`
-	ExpiresAt    time.Time    `json:"expiresAt"`
+	User         *response.UserResponse `json:"user"`
+	AccessToken  string                 `json:"accessToken"`
+	RefreshToken string                 `json:"refreshToken"`
+	ExpiresAt    time.Time              `json:"expiresAt"`
 }
 
-// Register registers a new user
-func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
+// Register registers a new user (email and password only)
+// Profile should be set separately via user service
+func (s *AuthService) Register(ctx context.Context, req *request.RegisterRequest) (*AuthResponse, error) {
 	// Check if user already exists
 	existingUser, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
@@ -79,23 +66,18 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Auth
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create user
+	// Create user with default profile
 	user := &domain.User{
 		ID:           primitive.NewObjectID(),
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
-		Profile: domain.UserProfile{
-			Name:   req.Name,
-			Age:    req.Age,
-			Weight: req.Weight,
-			Height: req.Height,
-			Gender: req.Gender,
-			Goal:   req.Goal,
+		Profile:      domain.UserProfile{
+			// Default empty profile - user should set it via user service
 		},
 		Preferences: domain.UserPreferences{
 			Language:      "en",
-			CalorieTarget: s.calculateCalorieTarget(req.Weight, req.Height, req.Age, req.Gender, req.Goal),
-			MacroTargets:  s.calculateMacroTargets(req.Goal),
+			CalorieTarget: 0, // Will be calculated when profile is set
+			MacroTargets:  domain.MacroNutrients{},
 		},
 	}
 
@@ -114,8 +96,11 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Auth
 		logger.String("email", req.Email),
 		logger.String("userID", user.ID.Hex()))
 
+	// Convert to response
+	userResponse := domainUserToResponse(user)
+
 	return &AuthResponse{
-		User:         user,
+		User:         userResponse,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresAt:    expiresAt,
@@ -123,7 +108,7 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Auth
 }
 
 // Login authenticates a user
-func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req *request.LoginRequest) (*AuthResponse, error) {
 	// Get user by email
 	user, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
@@ -145,8 +130,11 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthRespon
 		logger.String("email", req.Email),
 		logger.String("userID", user.ID.Hex()))
 
+	// Convert to response
+	userResponse := domainUserToResponse(user)
+
 	return &AuthResponse{
-		User:         user,
+		User:         userResponse,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresAt:    expiresAt,
@@ -194,8 +182,11 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*A
 		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
 
+	// Convert to response
+	userResponse := domainUserToResponse(user)
+
 	return &AuthResponse{
-		User:         user,
+		User:         userResponse,
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 		ExpiresAt:    expiresAt,
@@ -239,54 +230,63 @@ func (s *AuthService) generateTokens(userID string) (string, string, time.Time, 
 	return accessTokenString, refreshTokenString, expiresAt, nil
 }
 
-// calculateCalorieTarget calculates daily calorie target based on user profile
-func (s *AuthService) calculateCalorieTarget(weight, height float64, age int, gender, goal string) float64 {
-	// Basic BMR calculation (Mifflin-St Jeor Equation)
-	var bmr float64
-	if gender == "male" {
-		bmr = 10*weight + 6.25*height - 5*float64(age) + 5
-	} else {
-		bmr = 10*weight + 6.25*height - 5*float64(age) - 161
+// ValidateToken validates a JWT token and returns user ID
+func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(s.config.JWTSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return "", fmt.Errorf("invalid token")
 	}
 
-	// Activity factor (sedentary)
-	activityFactor := 1.2
-	maintenanceCalories := bmr * activityFactor
-
-	// Adjust based on goal
-	switch goal {
-	case "weight_loss":
-		return maintenanceCalories - 500 // 500 calorie deficit
-	case "muscle_gain":
-		return maintenanceCalories + 300 // 300 calorie surplus
-	default: // maintenance
-		return maintenanceCalories
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("invalid token claims")
 	}
+
+	// Check token type
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "access" {
+		return "", fmt.Errorf("invalid token type")
+	}
+
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid user ID in token")
+	}
+
+	return userIDStr, nil
 }
 
-// calculateMacroTargets calculates macro targets based on goal
-func (s *AuthService) calculateMacroTargets(goal string) domain.MacroNutrients {
-	switch goal {
-	case "weight_loss":
-		return domain.MacroNutrients{
-			Protein:       1.6, // g per kg body weight
-			Carbohydrates: 2.0,
-			Fat:           0.8,
-			Fiber:         0.03,
-		}
-	case "muscle_gain":
-		return domain.MacroNutrients{
-			Protein:       2.2,
-			Carbohydrates: 4.0,
-			Fat:           1.0,
-			Fiber:         0.03,
-		}
-	default: // maintenance
-		return domain.MacroNutrients{
-			Protein:       1.8,
-			Carbohydrates: 3.0,
-			Fat:           0.9,
-			Fiber:         0.03,
-		}
+// domainUserToResponse converts domain.User to response.UserResponse
+func domainUserToResponse(user *domain.User) *response.UserResponse {
+	return &response.UserResponse{
+		ID:    user.ID.Hex(),
+		Email: user.Email,
+		Profile: response.UserProfileResponse{
+			Name:   user.Profile.Name,
+			Age:    user.Profile.Age,
+			Weight: user.Profile.Weight,
+			Height: user.Profile.Height,
+			Gender: user.Profile.Gender,
+			Goal:   user.Profile.Goal,
+		},
+		Preferences: response.UserPreferencesResponse{
+			Language:      user.Preferences.Language,
+			CalorieTarget: user.Preferences.CalorieTarget,
+			MacroTargets: response.MacroNutrientsResponse{
+				Protein:       user.Preferences.MacroTargets.Protein,
+				Carbohydrates: user.Preferences.MacroTargets.Carbohydrates,
+				Fat:           user.Preferences.MacroTargets.Fat,
+				Fiber:         user.Preferences.MacroTargets.Fiber,
+				Sugar:         user.Preferences.MacroTargets.Sugar,
+			},
+		},
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }
