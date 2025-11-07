@@ -35,7 +35,7 @@ func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 
 		// Protected routes (auth required)
 		protected := v1.Group("")
-		protected.Use(middleware.DefaultUserAuthMiddleware(handlers.Auth.logger))
+		protected.Use(middleware.AuthMiddleware(handlers.Auth.logger, handlers.Auth.config))
 		{
 			// User management
 			users := protected.Group("/users")

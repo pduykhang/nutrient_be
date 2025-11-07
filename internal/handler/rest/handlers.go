@@ -3,6 +3,7 @@ package rest
 import (
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"nutrient_be/internal/config"
 	"nutrient_be/internal/pkg/logger"
 	"nutrient_be/internal/service"
 )
@@ -30,9 +31,10 @@ func NewHandlers(
 	reportService *service.ReportService,
 	db *mongo.Client,
 	log logger.Logger,
+	cfg config.Config,
 ) *Handlers {
 	return &Handlers{
-		Auth:     NewAuthHandler(authService, log),
+		Auth:     NewAuthHandler(authService, log, cfg.Auth),
 		User:     NewUserHandler(userService, log),
 		Health:   NewHealthHandler(db, log),
 		Food:     NewFoodHandler(foodService, log),

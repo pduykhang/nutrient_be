@@ -20,7 +20,7 @@ database:
 
 auth:
   # JWT secret - can be overridden by JWT_SECRET env var
-  jwt_secret: "dev-secret-key"
+  jwt_secret: "hello_abc"
   jwt_expiration: 3600  # 1 hour
   refresh_expiration: 604800  # 7 days
 

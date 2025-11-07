@@ -29,13 +29,11 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-      nats:
-        condition: service_started
     networks:
       - nutrient-network
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://api:8080/health/liveness"]
-      interval: 10s
+      interval: 1m
       timeout: 3s
       retries: 3
       start_period: 10s
@@ -56,29 +54,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  mongo-express:
-    image: mongo-express:latest
-    ports:
-      - "8081:8081"
-    environment:
-      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
-    depends_on:
-      - mongo
-    networks:
-      - nutrient-network
-
-  nats:
-    image: nats:latest
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: "--http_port 8222"
-    networks:
-      - nutrient-network
-
 volumes:
   mongo-data:
 

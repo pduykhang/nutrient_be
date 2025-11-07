@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
+	"nutrient_be/internal/config"
 	"nutrient_be/internal/dto/request"
 	"nutrient_be/internal/handler/middleware"
 	"nutrient_be/internal/pkg/logger"
@@ -18,16 +19,18 @@ type AuthHandler struct {
 	authService    *service.AuthService
 	validator      *validator.Validate
 	logger         logger.Logger
+	config         config.AuthConfig
 	responseHelper *middleware.ResponseHelper
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authService *service.AuthService, log logger.Logger) *AuthHandler {
+func NewAuthHandler(authService *service.AuthService, log logger.Logger, cfg config.AuthConfig) *AuthHandler {
 	return &AuthHandler{
 		authService:    authService,
 		validator:      validator.New(),
 		logger:         log,
 		responseHelper: middleware.NewResponseHelper(),
+		config:         cfg,
 	}
 }
 

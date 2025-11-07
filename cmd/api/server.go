@@ -156,6 +156,7 @@ func startServer() {
 		reportService,
 		mongoDB.Client,
 		log,
+		*cfg,
 	)
 
 	// Setup Gin router

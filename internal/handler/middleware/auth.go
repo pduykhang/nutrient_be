@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"nutrient_be/internal/config"
 	"nutrient_be/internal/pkg/logger"
 )
 
@@ -15,7 +16,7 @@ const (
 )
 
 // AuthMiddleware validates JWT tokens
-func AuthMiddleware(log logger.Logger) gin.HandlerFunc {
+func AuthMiddleware(log logger.Logger, cfg config.AuthConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from Authorization header
 		authHeader := c.GetHeader("Authorization")
@@ -42,9 +43,7 @@ func AuthMiddleware(log logger.Logger) gin.HandlerFunc {
 				return nil, jwt.ErrSignatureInvalid
 			}
 
-			// Get JWT secret from environment or config
-			// For now, using a placeholder - this should come from config
-			return []byte("your-jwt-secret"), nil
+			return []byte(cfg.JWTSecret), nil
 		})
 
 		if err != nil {
