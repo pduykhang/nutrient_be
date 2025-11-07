@@ -59,8 +59,8 @@ func (h *FoodHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Call service - service will do business logic validation
-	if err := h.foodService.CreateFood(c.Request.Context(), userIDStr, &req); err != nil {
+	// Call service - use enriched context for consistent logging and context propagation
+	if err := h.foodService.CreateFood(ctx, userIDStr, &req); err != nil {
 		h.logger.Error(ctx, "Failed to create food", logger.Error(err))
 		h.responseHelper.InternalError(c, gin.H{"details": err.Error()}, "Failed to create food")
 		return
@@ -81,12 +81,13 @@ func (h *FoodHandler) Search(c *gin.Context) {
 	}
 
 	// Call service - service will do business logic validation
-	foods, err := h.foodService.SearchFood(c.Request.Context(), &req)
+	foods, err := h.foodService.SearchFood(ctx, &req)
 	if err != nil {
 		h.logger.Error(ctx, "Failed to search food", logger.Error(err))
 		h.responseHelper.InternalError(c, gin.H{"details": err.Error()}, "Failed to search food")
 		return
 	}
+	h.logger.Info(ctx, "Food search successful asdasda")
 
 	// Convert domain entities to response DTOs
 	foodResponses := make([]response.FoodItemResponse, len(foods))
@@ -110,8 +111,8 @@ func (h *FoodHandler) Get(c *gin.Context) {
 		return
 	}
 
-	// Call service to get food by ID
-	food, err := h.foodService.GetFoodByID(c.Request.Context(), foodID)
+	// Call service to get food by ID - use enriched context for consistent logging and context propagation
+	food, err := h.foodService.GetFoodByID(ctx, foodID)
 	if err != nil {
 		h.logger.Error(ctx, "Failed to get food by ID", logger.Error(err))
 		// Check if it's a not found error

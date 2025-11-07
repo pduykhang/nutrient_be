@@ -41,7 +41,7 @@ func NewZapLogger(isDevelopment bool) (Logger, error) {
 		// Note: AddStacktrace with PanicLevel means stack trace only appears for Panic/Fatal
 		zapLog, err = config.Build(
 			zap.AddStacktrace(zapcore.PanicLevel), // Only add stack trace for Panic and above
-			zap.AddCaller(),                       // Include caller information (file:line)
+			zap.AddCallerSkip(1),                  // Include caller information (file:line)
 		)
 	} else {
 		config := zap.NewProductionConfig()

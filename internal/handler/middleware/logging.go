@@ -15,13 +15,29 @@ const (
 )
 
 // LoggingMiddleware logs HTTP requests
+// Note: This middleware should be placed after ContextMiddleware to use enriched context
 func LoggingMiddleware(log logger.Logger) gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		// Create a basic context for logging
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, logger.RequestIDKey, param.Request.Header.Get(RequestIDHeader))
-		ctx = context.WithValue(ctx, logger.IPAddressKey, param.ClientIP)
-		ctx = context.WithValue(ctx, logger.UserAgentKey, param.Request.UserAgent())
+		// Try to get enriched context from Gin context (set by ContextMiddleware)
+		// If not available, create a basic context with request ID
+		var ctx context.Context
+		if ctxValue, exists := param.Keys["context"]; exists {
+			if enrichedCtx, ok := ctxValue.(context.Context); ok {
+				ctx = enrichedCtx
+			} else {
+				// Fallback: create basic context
+				ctx = context.Background()
+				ctx = context.WithValue(ctx, logger.RequestIDKey, param.Request.Header.Get(RequestIDHeader))
+				ctx = context.WithValue(ctx, logger.IPAddressKey, param.ClientIP)
+				ctx = context.WithValue(ctx, logger.UserAgentKey, param.Request.UserAgent())
+			}
+		} else {
+			// Fallback: create basic context
+			ctx = context.Background()
+			ctx = context.WithValue(ctx, logger.RequestIDKey, param.Request.Header.Get(RequestIDHeader))
+			ctx = context.WithValue(ctx, logger.IPAddressKey, param.ClientIP)
+			ctx = context.WithValue(ctx, logger.UserAgentKey, param.Request.UserAgent())
+		}
 
 		log.Info(ctx, "HTTP Request",
 			logger.String("method", param.Method),

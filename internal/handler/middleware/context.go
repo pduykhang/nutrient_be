@@ -33,8 +33,9 @@ func ContextMiddleware(log logger.Logger) gin.HandlerFunc {
 			}
 		}
 
-		// Create context with all the information
-		ctx := context.Background()
+		// Create context by extending the request context with all the information
+		// This preserves cancellation and timeout capabilities from the HTTP request
+		ctx := c.Request.Context()
 		ctx = context.WithValue(ctx, logger.RequestIDKey, requestID)
 		ctx = context.WithValue(ctx, logger.TraceIDKey, traceID)
 		ctx = context.WithValue(ctx, logger.UserIDKey, userID)
@@ -73,18 +74,46 @@ type ContextData struct {
 	StartTime time.Time
 }
 
-func GetContextData(c *gin.Context) *ContextData {
-	if ctxValue, exists := c.Get("context"); exists {
-		if ctx, ok := ctxValue.(context.Context); ok {
-			return &ContextData{
-				RequestID: ctx.Value(logger.RequestIDKey).(string),
-				TraceID:   ctx.Value(logger.TraceIDKey).(string),
-				UserID:    ctx.Value(logger.UserIDKey).(string),
-				IPAddress: ctx.Value(logger.IPAddressKey).(string),
-				UserAgent: ctx.Value(logger.UserAgentKey).(string),
-				StartTime: ctx.Value(logger.StartTimeKey).(time.Time),
-			}
+// getStringValueFromContext safely extracts a string value from context
+func getStringValueFromContext(ctx context.Context, key logger.ContextKey) string {
+	if val := ctx.Value(key); val != nil {
+		if str, ok := val.(string); ok {
+			return str
 		}
 	}
-	return nil
+	return ""
+}
+
+// parseStartTimeFromContext parses StartTime from context (stored as RFC3339 string)
+func parseStartTimeFromContext(ctx context.Context) time.Time {
+	startTimeStr := getStringValueFromContext(ctx, logger.StartTimeKey)
+	if startTimeStr == "" {
+		return time.Time{}
+	}
+	parsed, err := time.Parse(time.RFC3339, startTimeStr)
+	if err != nil {
+		return time.Time{}
+	}
+	return parsed
+}
+
+func GetContextData(c *gin.Context) *ContextData {
+	ctxValue, exists := c.Get("context")
+	if !exists {
+		return nil
+	}
+
+	ctx, ok := ctxValue.(context.Context)
+	if !ok {
+		return nil
+	}
+
+	return &ContextData{
+		RequestID: getStringValueFromContext(ctx, logger.RequestIDKey),
+		TraceID:   getStringValueFromContext(ctx, logger.TraceIDKey),
+		UserID:    getStringValueFromContext(ctx, logger.UserIDKey),
+		IPAddress: getStringValueFromContext(ctx, logger.IPAddressKey),
+		UserAgent: getStringValueFromContext(ctx, logger.UserAgentKey),
+		StartTime: parseStartTimeFromContext(ctx),
+	}
 }

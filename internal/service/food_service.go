@@ -63,29 +63,32 @@ func (s *FoodService) CreateFood(ctx context.Context, userID string, req *reques
 	return nil
 }
 
+// SearchFood searches for food items based on query
+// It extracts userID from context to filter results (public foods + user's own foods)
 func (s *FoodService) SearchFood(ctx context.Context, req *request.SearchFoodRequest) ([]*domain.FoodItem, error) {
 	s.logger.Info(ctx, "Searching food", logger.String("query", req.Query))
 
-	// Get user ID from context (set by context middleware)
-	userIDValue := ctx.Value(logger.UserIDKey)
-	if userIDValue == nil {
-		s.logger.Error(ctx, "User ID not found in context")
-		return nil, fmt.Errorf("user ID not found in context")
+	// Extract userID from context (set by auth middleware and context middleware)
+	userIDStr := ""
+	if userIDValue := ctx.Value(logger.UserIDKey); userIDValue != nil {
+		if userID, ok := userIDValue.(string); ok {
+			userIDStr = userID
+		}
 	}
 
-	userIDStr, ok := userIDValue.(string)
-	if !ok || userIDStr == "" {
-		s.logger.Error(ctx, "Invalid user ID in context")
-		return nil, fmt.Errorf("invalid user ID in context")
+	// Convert userID string to ObjectID for repository call
+	// If userID is empty, use empty ObjectID (will only return public foods)
+	var userIDObj primitive.ObjectID
+	if userIDStr != "" {
+		var err error
+		userIDObj, err = primitive.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			s.logger.Warn(ctx, "Invalid userID in context, using empty ObjectID", logger.Error(err))
+			userIDObj = primitive.NilObjectID
+		}
 	}
 
-	userID, err := primitive.ObjectIDFromHex(userIDStr)
-	if err != nil {
-		s.logger.Error(ctx, "Failed to convert user ID to object ID", logger.Error(err))
-		return nil, fmt.Errorf("failed to convert user ID to object ID: %w", err)
-	}
-
-	foods, err := s.foodRepo.Search(ctx, req.Query, userID, req.Limit, req.Offset)
+	foods, err := s.foodRepo.Search(ctx, req.Query, userIDObj, req.Limit, req.Offset)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to search food", logger.Error(err))
 		return nil, fmt.Errorf("failed to search food: %w", err)

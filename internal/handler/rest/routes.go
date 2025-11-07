@@ -11,10 +11,12 @@ import (
 // SetupRoutes configures all API routes
 func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 	// Add global middleware first
-	r.Use(middleware.LoggingMiddleware(handlers.Auth.logger))
+	// Order matters: ContextMiddleware must come before LoggingMiddleware
+	// so that LoggingMiddleware can use the enriched context
+	r.Use(middleware.ContextMiddleware(handlers.Auth.logger)) // Add context middleware first
+	r.Use(middleware.LoggingMiddleware(handlers.Auth.logger)) // Uses enriched context from ContextMiddleware
 	r.Use(middleware.RecoveryMiddleware(handlers.Auth.logger))
 	r.Use(middleware.CORSMiddleware())
-	r.Use(middleware.ContextMiddleware(handlers.Auth.logger))  // Add context middleware
 	r.Use(middleware.ResponseMiddleware(handlers.Auth.logger)) // Add response middleware
 
 	// Health checks (no auth required)
