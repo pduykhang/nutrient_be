@@ -66,8 +66,8 @@ func ResponseMiddleware(log logger.Logger) gin.HandlerFunc {
 
 		// Add metadata
 		response.Meta = &Meta{
-			RequestID: c.GetHeader("X-Request-ID"),
-			TraceID:   c.GetHeader("X-Trace-ID"),
+			RequestID: getStringValueFromContext(GetContext(c), logger.RequestIDKey),
+			TraceID:   getStringValueFromContext(GetContext(c), logger.TraceIDKey),
 			Timestamp: getCurrentTimestamp(),
 			Version:   "v1.0",
 		}
