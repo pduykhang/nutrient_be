@@ -71,6 +71,7 @@ func SetupRoutes(r *gin.Engine, handlers *Handlers) {
 				templates.POST("", handlers.Meal.CreateTemplate)
 				templates.GET("", handlers.Meal.ListTemplates)
 				templates.GET("/:id", handlers.Meal.GetTemplate)
+				templates.POST("/:id/foods", handlers.Meal.AddFoodToTemplate)
 				templates.PUT("/:id", handlers.Meal.UpdateTemplate)
 				templates.DELETE("/:id", handlers.Meal.DeleteTemplate)
 			}

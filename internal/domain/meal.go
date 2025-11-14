@@ -14,6 +14,7 @@ type MealTemplateFoodItem struct {
 	Amount      float64            `bson:"amount" json:"amount"`
 	Calories    float64            `bson:"calories" json:"calories"` // Calculated calories for this amount
 	Macros      MacroNutrients     `bson:"macros" json:"macros"`     // Calculated macros for this amount
+	Micros      MicroNutrients     `bson:"micros,omitempty" json:"micros,omitempty"` // Calculated micros for this amount
 }
 
 // MealTemplate represents a reusable meal combination
@@ -26,6 +27,7 @@ type MealTemplate struct {
 	FoodItems     []MealTemplateFoodItem `bson:"foodItems" json:"foodItems"`
 	TotalCalories float64                `bson:"totalCalories" json:"totalCalories"` // Calculated
 	TotalMacros   MacroNutrients         `bson:"totalMacros" json:"totalMacros"`
+	TotalMicros   MicroNutrients         `bson:"totalMicros,omitempty" json:"totalMicros,omitempty"`
 	Tags          []string               `bson:"tags,omitempty" json:"tags,omitempty"`
 	IsPublic      bool                   `bson:"isPublic" json:"isPublic"`
 	CreatedAt     time.Time              `bson:"createdAt" json:"createdAt"`

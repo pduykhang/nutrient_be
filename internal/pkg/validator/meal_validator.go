@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,57 +9,111 @@ import (
 	"nutrient_be/internal/pkg/logger"
 )
 
-// MealValidator handles meal template validation
+// MealValidator handles meal template data validation
 type MealValidator struct {
-	maxNameLength        int
+	logger          logger.Logger
+	maxNameLength   int
 	maxDescriptionLength int
-	maxTagsPerMeal       int
-	maxFoodItemsPerMeal  int
-	logger               logger.Logger
+	maxTags         int
+	maxTagLength    int
 }
 
-// NewMealValidator creates a new meal validator
+// NewMealValidator creates a new meal validator with default rules
 func NewMealValidator(logger logger.Logger) *MealValidator {
 	return &MealValidator{
-		maxNameLength:        100,
-		maxDescriptionLength: 500,
-		maxTagsPerMeal:       10,
-		maxFoodItemsPerMeal:  50,
 		logger:               logger,
+		maxNameLength:         200,
+		maxDescriptionLength: 1000,
+		maxTags:               20,
+		maxTagLength:          50,
 	}
 }
 
-// ValidateCreateTemplateRequest validates a CreateMealTemplateRequest
-func (v *MealValidator) ValidateCreateTemplateRequest(req *request.CreateMealTemplateRequest) error {
-	// 1. Validate Name
+// ValidateCreateRequest validates a CreateMealTemplateRequest
+func (v *MealValidator) ValidateCreateRequest(ctx context.Context, req *request.CreateMealTemplateRequest) error {
+	// Validate name
 	if err := v.validateName(req.Name); err != nil {
 		return fmt.Errorf("name validation failed: %w", err)
 	}
 
-	// 2. Validate Description (optional)
-	if req.Description != "" && len(req.Description) > v.maxDescriptionLength {
-		return fmt.Errorf("description exceeds maximum length (%d chars)", v.maxDescriptionLength)
+	// Validate description (optional)
+	if req.Description != "" {
+		if err := v.validateDescription(req.Description); err != nil {
+			return fmt.Errorf("description validation failed: %w", err)
+		}
 	}
 
-	// 3. Validate Meal Type
+	// Validate meal type
 	if err := v.validateMealType(req.MealType); err != nil {
 		return fmt.Errorf("meal type validation failed: %w", err)
 	}
 
-	// 4. Validate Food Items
+	// Validate food items
 	if err := v.validateFoodItems(req.FoodItems); err != nil {
 		return fmt.Errorf("food items validation failed: %w", err)
 	}
 
-	// 5. Validate Tags
-	if err := v.validateTags(req.Tags); err != nil {
-		return fmt.Errorf("tags validation failed: %w", err)
+	// Validate tags (optional)
+	if len(req.Tags) > 0 {
+		if err := v.validateTags(req.Tags); err != nil {
+			return fmt.Errorf("tags validation failed: %w", err)
+		}
 	}
 
 	return nil
 }
 
-// validateName validates meal template name
+// ValidateUpdateRequest validates an UpdateMealTemplateRequest
+func (v *MealValidator) ValidateUpdateRequest(ctx context.Context, req *request.UpdateMealTemplateRequest) error {
+	// Validate name if provided
+	if req.Name != "" {
+		if err := v.validateName(req.Name); err != nil {
+			return fmt.Errorf("name validation failed: %w", err)
+		}
+	}
+
+	// Validate description if provided
+	if req.Description != "" {
+		if err := v.validateDescription(req.Description); err != nil {
+			return fmt.Errorf("description validation failed: %w", err)
+		}
+	}
+
+	// Validate meal type if provided
+	if req.MealType != "" {
+		if err := v.validateMealType(req.MealType); err != nil {
+			return fmt.Errorf("meal type validation failed: %w", err)
+		}
+	}
+
+	// Validate food items if provided
+	if req.FoodItems != nil && len(req.FoodItems) > 0 {
+		if err := v.validateFoodItems(req.FoodItems); err != nil {
+			return fmt.Errorf("food items validation failed: %w", err)
+		}
+	}
+
+	// Validate tags if provided
+	if req.Tags != nil && len(req.Tags) > 0 {
+		if err := v.validateTags(req.Tags); err != nil {
+			return fmt.Errorf("tags validation failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateAddFoodRequest validates an AddFoodToTemplateRequest
+func (v *MealValidator) ValidateAddFoodRequest(ctx context.Context, req *request.AddFoodToTemplateRequest) error {
+	// Validate food items
+	if err := v.validateFoodItems(req.FoodItems); err != nil {
+		return fmt.Errorf("food items validation failed: %w", err)
+	}
+
+	return nil
+}
+
+// validateName validates template name
 func (v *MealValidator) validateName(name string) error {
 	trimmed := strings.TrimSpace(name)
 	if trimmed == "" {
@@ -70,7 +125,15 @@ func (v *MealValidator) validateName(name string) error {
 	return nil
 }
 
-// validateMealType validates meal type value
+// validateDescription validates template description
+func (v *MealValidator) validateDescription(description string) error {
+	if len(description) > v.maxDescriptionLength {
+		return fmt.Errorf("description exceeds maximum length (%d chars)", v.maxDescriptionLength)
+	}
+	return nil
+}
+
+// validateMealType validates meal type
 func (v *MealValidator) validateMealType(mealType string) error {
 	validTypes := map[string]bool{
 		"breakfast": true,
@@ -80,68 +143,60 @@ func (v *MealValidator) validateMealType(mealType string) error {
 	}
 
 	if !validTypes[mealType] {
-		return fmt.Errorf("invalid meal type '%s'. Valid types: breakfast, lunch, dinner, snack", mealType)
+		return fmt.Errorf("invalid meal type '%s', must be one of: breakfast, lunch, dinner, snack", mealType)
 	}
 
 	return nil
 }
 
-// validateFoodItems validates food items in meal template
-func (v *MealValidator) validateFoodItems(items []request.MealTemplateFoodItemRequest) error {
-	if len(items) == 0 {
+// validateFoodItems validates food items array
+func (v *MealValidator) validateFoodItems(foodItems []request.MealTemplateFoodItemRequest) error {
+	if len(foodItems) == 0 {
 		return fmt.Errorf("at least one food item is required")
 	}
 
-	if len(items) > v.maxFoodItemsPerMeal {
-		return fmt.Errorf("too many food items (%d). Maximum allowed: %d", len(items), v.maxFoodItemsPerMeal)
-	}
-
-	for i, item := range items {
-		// Validate FoodItemID
-		if item.FoodItemID == "" {
+	// Check for duplicate food items (same food ID and serving unit)
+	foodItemMap := make(map[string]bool)
+	for i, item := range foodItems {
+		// Validate food item ID
+		if strings.TrimSpace(item.FoodItemID) == "" {
 			return fmt.Errorf("food item %d: foodItemId is required", i+1)
 		}
 
-		// Validate ServingUnit
-		validUnits := map[string]bool{
-			"gram":  true,
-			"kg":    true,
-			"piece": true,
-			"cup":   true,
-			"ml":    true,
-			"box":   true,
-		}
-		if !validUnits[item.ServingUnit] {
-			return fmt.Errorf("food item %d: invalid serving unit '%s'", i+1, item.ServingUnit)
+		// Validate serving unit
+		if strings.TrimSpace(item.ServingUnit) == "" {
+			return fmt.Errorf("food item %d: servingUnit is required", i+1)
 		}
 
-		// Validate Amount
+		// Validate amount
 		if item.Amount <= 0 {
 			return fmt.Errorf("food item %d: amount must be greater than 0", i+1)
 		}
 
-		// Validate reasonable amount limit
-		if item.Amount > 10000 {
-			return fmt.Errorf("food item %d: amount (%.2f) is unreasonably large", i+1, item.Amount)
+		// Check for duplicates
+		key := fmt.Sprintf("%s:%s", item.FoodItemID, item.ServingUnit)
+		if foodItemMap[key] {
+			return fmt.Errorf("food item %d: duplicate food item with same foodItemId and servingUnit", i+1)
 		}
+		foodItemMap[key] = true
 	}
 
 	return nil
 }
 
-// validateTags validates meal template tags
+// validateTags validates tags array
 func (v *MealValidator) validateTags(tags []string) error {
-	if len(tags) > v.maxTagsPerMeal {
-		return fmt.Errorf("too many tags (%d). Maximum allowed: %d", len(tags), v.maxTagsPerMeal)
+	if len(tags) > v.maxTags {
+		return fmt.Errorf("maximum number of tags is %d", v.maxTags)
 	}
 
 	for i, tag := range tags {
 		trimmed := strings.TrimSpace(tag)
 		if trimmed == "" {
-			return fmt.Errorf("tag %d cannot be empty", i+1)
+			return fmt.Errorf("tag %d: cannot be empty", i+1)
 		}
-		if len(trimmed) > 50 {
-			return fmt.Errorf("tag %d exceeds maximum length (50 chars)", i+1)
+		if len(trimmed) > v.maxTagLength {
+			return fmt.Errorf("tag %d: exceeds maximum length (%d chars)", i+1, v.maxTagLength)
 		}
 	}
 

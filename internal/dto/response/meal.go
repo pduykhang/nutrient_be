@@ -10,8 +10,9 @@ type MealTemplateResponse struct {
 	Description   string                         `json:"description,omitempty"`
 	MealType      string                         `json:"mealType"`
 	FoodItems     []MealTemplateFoodItemResponse `json:"foodItems"`
-	TotalCalories float64                       `json:"totalCalories"`
+	TotalCalories float64                        `json:"totalCalories"`
 	TotalMacros   MacroNutrientsResponse         `json:"totalMacros"`
+	TotalMicros   MicroNutrientsResponse         `json:"totalMicros,omitempty"`
 	Tags          []string                       `json:"tags,omitempty"`
 	IsPublic      bool                           `json:"isPublic"`
 	CreatedAt     time.Time                      `json:"createdAt"`
@@ -20,11 +21,12 @@ type MealTemplateResponse struct {
 
 // MealTemplateFoodItemResponse represents a food item in a meal template response
 type MealTemplateFoodItemResponse struct {
-	FoodItemID  string                `json:"foodItemId"`
-	FoodName    string                `json:"foodName"`
-	ServingUnit string                `json:"servingUnit"`
-	Amount      float64               `json:"amount"`
-	Calories    float64               `json:"calories"`
+	FoodItemID  string                 `json:"foodItemId"`
+	FoodName    string                 `json:"foodName"`
+	ServingUnit string                 `json:"servingUnit"`
+	Amount      float64                `json:"amount"`
+	Calories    float64                `json:"calories"`
 	Macros      MacroNutrientsResponse `json:"macros"`
+	Micros      MicroNutrientsResponse `json:"micros,omitempty"`
 }
 

@@ -22,8 +22,13 @@ type UpdateMealTemplateRequest struct {
 
 // MealTemplateFoodItemRequest represents a food item in a meal template request
 type MealTemplateFoodItemRequest struct {
-	FoodItemID  string                `json:"foodItemId" validate:"required"`
-	ServingUnit string                `json:"servingUnit" validate:"required"`
-	Amount      float64               `json:"amount" validate:"required,min=0"`
+	FoodItemID  string  `json:"foodItemId" validate:"required"`
+	ServingUnit string  `json:"servingUnit" validate:"required"`
+	Amount      float64 `json:"amount" validate:"required,min=0"`
+}
+
+// AddFoodToTemplateRequest represents a request to add food items to a meal template
+type AddFoodToTemplateRequest struct {
+	FoodItems []MealTemplateFoodItemRequest `json:"foodItems" validate:"required,min=1"`
 }
 
